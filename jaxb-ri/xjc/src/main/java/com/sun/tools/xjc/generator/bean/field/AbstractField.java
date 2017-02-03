@@ -42,7 +42,9 @@ package com.sun.tools.xjc.generator.bean.field;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.TreeSet;
 
 import javax.xml.bind.annotation.W3CDomHandler;
 import javax.xml.bind.annotation.XmlList;
@@ -178,8 +180,13 @@ abstract class AbstractField implements FieldOutline {
 
         TODO.prototype();
         // this is just a quick hack to get the basic test working
-
-        Collection<CElement> elements = rp.getElements();
+        Collection<CElement> elements = new TreeSet<CElement>(new Comparator<CElement>() {
+            @Override
+            public int compare(CElement o1, CElement o2) {
+                return o1.getElementName().toString().compareTo(o2.getElementName().toString());
+            }
+        });
+        elements.addAll(rp.getElements());
 
         XmlElementRefWriter refw;
         if(elements.size()==1) {
@@ -483,8 +490,14 @@ abstract class AbstractField implements FieldOutline {
      */
     protected final List<Object> listPossibleTypes( CPropertyInfo prop ) {
         List<Object> r = new ArrayList<Object>();
+        TreeSet<JType> sortedTypes = new TreeSet<JType>();
+
         for( CTypeInfo tt : prop.ref() ) {
             JType t = tt.getType().toType(outline.parent(),Aspect.EXPOSED);
+            sortedTypes.add(t);
+        }
+
+        for (JType t : sortedTypes) {
             if( t.isPrimitive() || t.isArray() )
                 r.add(t.fullName());
             else {
